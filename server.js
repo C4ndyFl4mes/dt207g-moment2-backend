@@ -102,6 +102,36 @@ app.put('/cv', async (req, res) => {
 });
 
 /**
+ * Kontrollerar om id inte är undefined/null eller tom sträng.
+ */
+app.delete('/cv', async (req, res) => {
+    if (req.body.id || req.body.id != "") {
+        if (await deleteCVRow(req.body.id)) {
+            res.status(200).json( {valid: true,  message: "Information raderades."} );
+        } else {
+            res.status(400).json( {valid: false, message: "Kunde inte radera information."});
+        }
+    }
+});
+
+/**
+ * Raderar en rad från databasen beroende på id.
+ * @param {number} id - unik nummer för en rad. 
+ * @returns {object}
+ */
+async function deleteCVRow(id) {
+    try {
+        const results = await db_client.query(`DELETE FROM WorkExperiences WHERE id = $1`, [id]);
+        if (!results) {
+            return null;
+        }
+        return results;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
  * Ändrar en rad i databasen beroende på id, alla parametrar är vad de heter.
  * @param {number} id - ett unik nummer för en rad.
  * @param {string} companyname
