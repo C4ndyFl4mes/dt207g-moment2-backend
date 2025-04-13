@@ -29,6 +29,9 @@ db_client.connect((error) => {
     }
 });
 
+/**
+ * Den här anonyma funktionen anropar getCVRows() och hanterar ett fel.
+ */
 app.get('/cv', async (req, res) => {
     const data = await getCVRows();
     if (data) {
@@ -39,6 +42,9 @@ app.get('/cv', async (req, res) => {
     }
 });
 
+/**
+ * Den här anonyma funktionen kontrollerar de fält som har skickats till servern, returnerar felmeddelanden vid fel. Anropar addCVRow och skickar fel om det gick fel, bra mening.
+ */
 app.post('/cv', async (req, res) => {
     const newData = [["Företagsnamn", req.body.companyname], ["Arbetsuppgift", req.body.jobtitle], ["Plats", req.body.location], ["Start datum", req.body.startdate], ["Slut datum", req.body.enddate], ["Beskrivning", req.body.description]];
 
@@ -57,8 +63,7 @@ app.post('/cv', async (req, res) => {
         res.status(400).json({ valid: false, message: emptyFieldsError });
         return;
     } else {
-        const r = await addCVRow(newData[0][1], newData[1][1], newData[2][1], newData[3][1], newData[4][1], newData[5][1]);
-        if (r) {
+        if (await addCVRow(newData[0][1], newData[1][1], newData[2][1], newData[3][1], newData[4][1], newData[5][1])) {
             res.status(200).json( {valid: true,  message: "Ny information lades till."} );
         } else {
             res.status(400).json( {valid: false, message: "Kunde inte lägga till ny information."});
@@ -66,6 +71,72 @@ app.post('/cv', async (req, res) => {
     }
 });
 
+/**
+ * Gör samma sak som ovan med kontrollering, men anropar istället editCVRow().
+ */
+app.put('/cv', async (req, res) => {
+    const newData = [["Företagsnamn", req.body.companyname], ["Arbetsuppgift", req.body.jobtitle], ["Plats", req.body.location], ["Start datum", req.body.startdate], ["Slut datum", req.body.enddate], ["Beskrivning", req.body.description]];
+    const cvID = req.body.id;
+    // Tomma fält hanteras på samma sätt som vid post. Skulle ha gjort en funktion, men jag tror jag har råkat skriva dum kod så ifall jag har tid listar jag ut det.
+    const emptyFields = newData.filter(data => data[1] === "" || !data[1]);
+    const emptyFieldsError = { header: "Följande fält är tomma: " };
+    if (emptyFields.length > 0) {
+        for (let i = 0; i < emptyFields.length; i++) {
+            if (i == 0) {
+                emptyFieldsError.message = emptyFields[i][0];
+            } else if (i > 0 && i < emptyFields.length - 1) {
+                emptyFieldsError.message += `, ${emptyFields[i][0]}`;
+            } else if (i === emptyFields.length - 1) {
+                emptyFieldsError.message += ` och ${emptyFields[i][0]}`;
+            }
+        }
+        res.status(400).json({ valid: false, message: emptyFieldsError });
+        return;
+    } else {
+        if (await editCVRow(cvID, newData[0][1], newData[1][1], newData[2][1], newData[3][1], newData[4][1], newData[5][1])) {
+            res.status(200).json( {valid: true,  message: "Information uppdaterades."} );
+        } else {
+            res.status(400).json( {valid: false, message: "Kunde inte uppdatera information."});
+        }
+    }
+});
+
+/**
+ * Ändrar en rad i databasen beroende på id, alla parametrar är vad de heter.
+ * @param {number} id - ett unik nummer för en rad.
+ * @param {string} companyname
+ * @param {string} jobtitle 
+ * @param {string} location 
+ * @param {string} startdate 
+ * @param {string} enddate 
+ * @param {string} description 
+ * @returns {object}
+ */
+async function editCVRow(id, companyname, jobtitle, location, startdate, enddate, description) {
+    try {
+        const results = await db_client.query(
+            `UPDATE WorkExperiences SET companyname = $1, jobtitle = $2, location = $3, startdate = $4, enddate = $5, description = $6 WHERE id = $7`,
+            [companyname, jobtitle, location, startdate, enddate, description, id]
+        );
+        if (!results) {
+            return null;
+        }
+        return results;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
+ * Lägger till en rad i databasen med informationen från parametrarna, alla parametrar är vad de heter.
+ * @param {string} companyname 
+ * @param {string} jobtitle 
+ * @param {string} location 
+ * @param {string} startdate 
+ * @param {string} enddate 
+ * @param {string} description 
+ * @returns {object}
+ */
 async function addCVRow(companyname, jobtitle, location, startdate, enddate, description) {
     try {
         const results = await db_client.query(`
@@ -75,13 +146,16 @@ async function addCVRow(companyname, jobtitle, location, startdate, enddate, des
         if (!results) {
             return null;
         }
-        console.log(results);
         return results;
     } catch (error) {
         console.error(error);
     }
 }
 
+/**
+ * Läser rader från databasen.
+ * @returns {array} - en array av objekt.
+ */
 async function getCVRows() {
     try {
         const results = await db_client.query(`SELECT * FROM WorkExperiences;`);
@@ -93,10 +167,6 @@ async function getCVRows() {
         console.error(error);
     }
 }
-
-
-
-
 
 app.listen(port, () => {
     console.log('Server is running on port: ' + port);
