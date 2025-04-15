@@ -42,7 +42,7 @@ app.get('/cv', async (req, res) => {
     if (data) {
         res.status(200).json(data);
     } else {
-        res.status(404).json({ error: "Kunde inte hitta information." });
+        res.status(404).json({ valid: false, message: { header: "Hämtning misslyckades", message: "Kunde inte hitta information." } });
         return;
     }
 });
@@ -55,7 +55,7 @@ app.post('/cv', async (req, res) => {
 
     if (new Date(newData[3][1]) && new Date(newData[4][1])) {
         if (new Date(newData[3][1]) > new Date(newData[4][1])) {
-            res.status(400).json( {valid: false, message: `Inledningsdatumet: ${(new Date(newData[3][1])).toISOString().split("T")[0]} måste komma före avslutningsdatumet: ${(new Date(newData[4][1])).toISOString().split("T")[0]}`});
+            res.status(400).json({ valid: false, message: { header: "Inledningsdatum kan inte vara efter avslutningsdatum", message: `Inledningsdatumet: ${(new Date(newData[3][1])).toISOString().split("T")[0]} | avslutningsdatumet: ${(new Date(newData[4][1])).toISOString().split("T")[0]}` } });
             return;
         }
     }
@@ -75,9 +75,9 @@ app.post('/cv', async (req, res) => {
         return;
     } else {
         if (await addCVRow(newData[0][1], newData[1][1], newData[2][1], newData[3][1], newData[4][1], newData[5][1])) {
-            res.status(200).json( {valid: true,  message: "Ny information lades till."} );
+            res.status(201).json({ valid: true, message: { header: "Lyckades", message: "Ny information lades till." } });
         } else {
-            res.status(400).json( {valid: false, message: "Kunde inte lägga till ny information."});
+            res.status(400).json({ valid: false, message: { header: "Misslyckades", message: "Kunde inte lägga till ny information." } });
         }
     }
 });
@@ -90,11 +90,11 @@ app.put('/cv', async (req, res) => {
     const cvID = req.body.id;
     if (new Date(newData[3][1]) && new Date(newData[4][1])) {
         if (new Date(newData[3][1]) > new Date(newData[4][1])) {
-            res.status(400).json( {valid: false, message: `Inledningsdatumet: ${(new Date(newData[3][1])).toISOString().split("T")[0]} måste komma före avslutningsdatumet: ${(new Date(newData[4][1])).toISOString().split("T")[0]}`});
+            res.status(400).json({ valid: false, message: { header: "Inledningsdatum kan inte vara efter avslutningsdatum", message: `Inledningsdatumet: ${(new Date(newData[3][1])).toISOString().split("T")[0]} | avslutningsdatumet: ${(new Date(newData[4][1])).toISOString().split("T")[0]}` } });
             return;
         }
     }
-    
+
     // Tomma fält hanteras på samma sätt som vid post. Skulle ha gjort en funktion, men jag tror jag har råkat skriva dum kod så ifall jag har tid listar jag ut det.
     const emptyFields = newData.filter(data => data[1] === "" || !data[1]);
     const emptyFieldsError = { header: "Följande fält är tomma: " };
@@ -112,9 +112,9 @@ app.put('/cv', async (req, res) => {
         return;
     } else {
         if (await editCVRow(cvID, newData[0][1], newData[1][1], newData[2][1], newData[3][1], newData[4][1], newData[5][1])) {
-            res.status(200).json( {valid: true,  message: "Information uppdaterades."} );
+            res.status(200).json({ valid: true, message: { header: "Uppdatering lyckades", message: "Information uppdaterades." } });
         } else {
-            res.status(400).json( {valid: false, message: "Kunde inte uppdatera information."});
+            res.status(400).json({ valid: false, message: {header: "Uppdatering misslyckades", message: "Kunde inte uppdatera information."} });
         }
     }
 });
@@ -125,9 +125,9 @@ app.put('/cv', async (req, res) => {
 app.delete('/cv', async (req, res) => {
     if (req.body.id || req.body.id != "") {
         if (await deleteCVRow(req.body.id)) {
-            res.status(200).json( {valid: true,  message: "Information raderades."} );
+            res.status(204).json({ valid: true, message: {header: "Radering lyckades", message: "Information raderades."} });
         } else {
-            res.status(400).json( {valid: false, message: "Kunde inte radera information."});
+            res.status(400).json({ valid: false, message: {header: "Radering misslyckades", message: "Kunde inte radera information."} });
         }
     }
 });
