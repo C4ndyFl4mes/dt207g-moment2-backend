@@ -7,7 +7,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: "https://dt207g-m0ment2-frontend.netlify.app",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type"]
 }));
@@ -53,6 +53,12 @@ app.get('/cv', async (req, res) => {
 app.post('/cv', async (req, res) => {
     const newData = [["Företagsnamn", req.body.companyname], ["Arbetsuppgift", req.body.jobtitle], ["Plats", req.body.location], ["Start datum", req.body.startdate], ["Slut datum", req.body.enddate], ["Beskrivning", req.body.description]];
 
+    if (new Date(newData[3][1]) && new Date(newData[4][1])) {
+        if (new Date(newData[3][1]) > new Date(newData[4][1])) {
+            res.status(400).json( {valid: false, message: `Inledningsdatumet: ${(new Date(newData[3][1])).toISOString().split("T")[0]} måste komma före avslutningsdatumet: ${(new Date(newData[4][1])).toISOString().split("T")[0]}`});
+            return;
+        }
+    }
     const emptyFields = newData.filter(data => data[1] === "" || !data[1]);
     const emptyFieldsError = { header: "Följande fält är tomma: " };
     if (emptyFields.length > 0) {
@@ -82,6 +88,13 @@ app.post('/cv', async (req, res) => {
 app.put('/cv', async (req, res) => {
     const newData = [["Företagsnamn", req.body.companyname], ["Arbetsuppgift", req.body.jobtitle], ["Plats", req.body.location], ["Start datum", req.body.startdate], ["Slut datum", req.body.enddate], ["Beskrivning", req.body.description]];
     const cvID = req.body.id;
+    if (new Date(newData[3][1]) && new Date(newData[4][1])) {
+        if (new Date(newData[3][1]) > new Date(newData[4][1])) {
+            res.status(400).json( {valid: false, message: `Inledningsdatumet: ${(new Date(newData[3][1])).toISOString().split("T")[0]} måste komma före avslutningsdatumet: ${(new Date(newData[4][1])).toISOString().split("T")[0]}`});
+            return;
+        }
+    }
+    
     // Tomma fält hanteras på samma sätt som vid post. Skulle ha gjort en funktion, men jag tror jag har råkat skriva dum kod så ifall jag har tid listar jag ut det.
     const emptyFields = newData.filter(data => data[1] === "" || !data[1]);
     const emptyFieldsError = { header: "Följande fält är tomma: " };
