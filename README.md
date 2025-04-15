@@ -2,7 +2,7 @@
 Det här är ett REST API skriven i JavaScript med Express för att hantera olika CV-poster. Den har funktioner för CRUD.
 
 ## Länk
-Webbsidan där API:et kan testas: ...
+Webbsidan där API:et kan testas: [CV Webbplats](https://dt207g-m0ment2-frontend.netlify.app/)
 
 ## Databas
 API:et använder en Postgres databas som består av en tabell med följande kolumner:
@@ -41,6 +41,8 @@ API:et använder en Postgres databas som består av en tabell med följande kolu
 </table>
 
 ## Användning
+API:et har fyra olika metoder: `GET`, `POST`, `PUT` och `DELETE`. `GET` kan inte hämta enskild CV-post utan den hämtar hela listan. `POST`, `PUT` och `DELETE` använder body i anropet för de olika egenskaperna/kolumner beskrivna ovan. `DELETE` skulle nog ha passat bättre med en
+param istället, men jag tänkte inte på det.
 <table>
   <tr>
     <th>Metod</th>
@@ -73,3 +75,27 @@ API:et använder en Postgres databas som består av en tabell med följande kolu
     <td>Raderar en CV-post</td>
   </tr>
 </table>
+Error meddelanden skickas i detta format:
+
+```json
+{
+    "valid": false,
+    "message": {
+        "header": "Rubrik",
+        "message": "Förtydligande"
+    }
+}
+```
+### Exempel
+Uppdatera en rad. Där `this.URL` är addressen till API:et och `this.header` är enbart `{"content-type": "application/json"};`
+```ts
+const resp: Response | null = await fetch(this.URL, {
+    method: "PUT",
+    headers: this.header,
+    body: JSON.stringify(item)
+});
+if (!resp) {
+    return {valid: false, message: {header: "Respons fel", message: "Fick ingen respons vid ändring."}};
+}
+const validation: IError = await resp.json();
+```
