@@ -7,7 +7,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: "https://dt207g-m0ment2-frontend.netlify.app",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type"]
 }));
@@ -125,7 +125,7 @@ app.put('/cv', async (req, res) => {
 app.delete('/cv', async (req, res) => {
     if (req.body.id || req.body.id != "") {
         if (await deleteCVRow(req.body.id)) {
-            res.status(204).json({ valid: true, message: {header: "Radering lyckades", message: "Information raderades."} });
+            res.status(200).json({ valid: true, message: {header: "Radering lyckades", message: "Information raderades."} });
         } else {
             res.status(400).json({ valid: false, message: {header: "Radering misslyckades", message: "Kunde inte radera information."} });
         }
